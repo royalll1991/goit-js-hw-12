@@ -149,3 +149,20 @@ img {
     transform: rotate(360deg);
   }
 } 
+
+#load-button{color: #FFF;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.5em;
+  letter-spacing: 0.64px;
+  border-radius: 8px;
+background-color: #4E75FF;
+display: block;
+padding: 8px 16px;
+border: none;
+display: none;}
+
+#load-button:hover{border-color: #000000;}
+  #load-button:focus{border-color:#4E75FF;}

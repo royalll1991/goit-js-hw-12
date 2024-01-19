@@ -10,34 +10,35 @@ const loaderContainer = document.querySelector('.loader-container');
 const loadButton = document.getElementById(`load-button`);
 let page = 1;
 let hits = [];
+let query;
+const perPage = 40;
 
 axios.defaults.baseURL= `https://pixabay.com`;
 
 async function getImage(query = "") {
-    return await  axios.get("/api", {
-        params: {
-          key: API_KEY,
-          q: query,
-          image_type: "photo",
-          orientation: "horizontal",
-          safesearch: true,
-          page: page,
-          per_page: 40,
-        },
-      })
-      .then((response) => {
-            hideLoader();
-            hits = response.data.hits;
-            return response.data;
-        })
-        .catch((error) => {
-            iziToast.show({
-                message: `${error}`,
-                color: "red",
-                position: "topRight",
-            });
+    try {
+        const response = await axios.get("/api/", {
+            params: {
+                key: API_KEY,
+                q: query,
+                image_type: "photo",
+                orientation: "horizontal",
+                safesearch: true,
+                page: page,
+                per_page: perPage,
+            },
         });
+        hideLoader();
+        return response.data;
+    } catch (error) {
+        iziToast.show({
+            message: `${error}`,
+            color: "red",
+            position: "topRight",
+        });
+    }
 }
+
 
 
 function showLoader() {
@@ -52,7 +53,7 @@ function showLoader() {
 activeForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    const query = event.target.elements.query.value.trim();
+     query = event.target.elements.query.value.trim();
 
 showLoader();
 
@@ -126,52 +127,52 @@ const lightbox = new SimpleLightbox('.gallery a', {
 </ul>
 </a> `).join(``)
     
-     gallery.insertAdjacentHTML("afterbegin",imageHTML);
+     gallery.insertAdjacentHTML("beforeend",imageHTML);
      lightbox.refresh();
      loadButton.style.display = "block";
 }
 
 
-loadButton.addEventListener("click", (page) => {
+loadButton.addEventListener("click", () => {
     loadButton.style.display = "none";
-    page++;
-   loadMoreImage();
-   checkLoadMoreButtonVisibility();
-   smoothScrollToGallery();
-})
+    loadMore();
+    
+});
 
-async function loadMoreImage() {
-    getImage()
-    .then(({ hits }) => {
-      if (hits.length > 0) {
+
+
+async function loadMore(event) {
+    loadButton.style.display = "block";
+    const listItem = document.querySelector(".gallery-link:first-child");
+    const itemHeight = listItem.getBoundingClientRect().height;
+
+    try {
+        page += 1;
+        const { hits, totalHits } = await getImage(query, page);
+        const totalPages = Math.ceil(totalHits / perPage);
         renderImages(hits);
-        loadButton.style.display = "block";
-      } else {
-        loadButton.style.display = "none";
-      }
-    })
-
-}
-function checkLoadMoreButtonVisibility() {
-   
-    if (gallery.children.length >= hits.length) {
-        loadButton.style.display = 'none';
-        iziToast.show({
-            message: "We're sorry, but you've reached the end of search results.",
-            color: "blue",
-            position: "topRight",
-        });
-    } else {
+        lightbox.refresh();
         
-        loadButton.style.display = 'block';
+        if (page === totalPages) {
+            
+            loadButton.style.display = "none";
+            iziToast.show({
+                message: "We're sorry, but you've reached the end od search results",
+                position: "topRight",
+                messageColor: "#ffffff",
+                    titleColor: "#ffffff",
+                    iconColor: "#ffffff",
+                    backgroundColor: "#EF4040",
+            });
+        } else {
+            loadButton.style.display = "block";
+        }
+    } catch (error) {
+        console.log(error);
+    } finally {
+        window.scrollBy({
+            top: 2 * itemHeight,
+            behavior: "smooth",
+        });
     }
 }
-function smoothScrollToGallery() {
-    const cardHeight = gallery.firstElementChild.getBoundingClientRect().height;
-    const scrollDistance = cardHeight * 2; 
-    window.scrollBy({
-        top: scrollDistance,
-        behavior: "smooth", 
-    });
-}
-

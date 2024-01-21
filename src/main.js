@@ -54,15 +54,18 @@ activeForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
      query = event.target.elements.query.value.trim();
+     
 
 showLoader();
-
+loadButton.style.display = "none";
 
 clearSearchResults();
 
+page = 1;
        getImage(query)
-    .then(({hits}) => { 
+    .then(({hits, totalHits}) => { 
         if (hits.length === 0) {
+            
             iziToast.show({
                 message: "Sorry, there are no images matching your search query. Please try again!",
                 color: "red",
@@ -70,9 +73,13 @@ clearSearchResults();
             });
         } else {
             renderImages(hits);
-            
+            if (totalHits <= perPage) {
+                loadButton.style.display = "none";
+            } else {
+                loadButton.style.display = "block";}
         }
         event.target.reset();
+        
     })
     .catch(error => {
         iziToast.show({
@@ -129,12 +136,13 @@ const lightbox = new SimpleLightbox('.gallery a', {
     
      gallery.insertAdjacentHTML("beforeend",imageHTML);
      lightbox.refresh();
-     loadButton.style.display = "block";
+     
 }
 
 
 loadButton.addEventListener("click", () => {
     loadButton.style.display = "none";
+    showLoader();
     loadMore();
     
 });
@@ -142,7 +150,7 @@ loadButton.addEventListener("click", () => {
 
 
 async function loadMore(event) {
-    loadButton.style.display = "block";
+    
     const listItem = document.querySelector(".gallery-link:first-child");
     const itemHeight = listItem.getBoundingClientRect().height;
 
@@ -168,7 +176,11 @@ async function loadMore(event) {
             loadButton.style.display = "block";
         }
     } catch (error) {
-        console.log(error);
+       iziToast.show({
+            message: `${error}`,
+            color: "red",
+position: "topRight",  
+        });
     } finally {
         window.scrollBy({
             top: 2 * itemHeight,
